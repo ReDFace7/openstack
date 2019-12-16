@@ -20,4 +20,10 @@ $ openstack router add subnet octavia_router octavia_subnet
 
 
 $ openstack loadbalancer flavorprofile create --name amphora_flavor --provider amphora --flavor-data '{"loadbalancer_topology": "SINGLE", "compute_flavor": "3cae8edd-8751-4175-8825-3f59e07f0431"}'
+$ openstack loadbalancer flavor create --name octavia_lb_flavor --flavorprofile amphora_flavor  --enable
+$ openstack loadbalancer create --name lb1 --vip-subnet-id octavia_subnet --flavor octavia_lb_flavor --provider amphora
+
+ERROR oslo_messaging.rpc.server ComputeBuildException: Failed to build compute instance due to: Multiple possible networks found, use a Network ID to be more specific. (HTTP 409) (Request-ID: req-25acb794-6db9-44e6-b2f1-708d0b56d66f)
+
+
 
