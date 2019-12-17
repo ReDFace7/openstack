@@ -18,12 +18,23 @@ $ openstack router set --external-gateway external-network octavia_router
 $ openstack router add subnet octavia_router octavia_subnet
 
 
-
+------------------------ fail ----------------------------
 $ openstack loadbalancer flavorprofile create --name amphora_flavor --provider amphora --flavor-data '{"loadbalancer_topology": "SINGLE", "compute_flavor": "3cae8edd-8751-4175-8825-3f59e07f0431"}'
 $ openstack loadbalancer flavor create --name octavia_lb_flavor --flavorprofile amphora_flavor  --enable
 $ openstack loadbalancer create --name lb1 --vip-subnet-id octavia_subnet --flavor octavia_lb_flavor --provider amphora
 
 ERROR oslo_messaging.rpc.server ComputeBuildException: Failed to build compute instance due to: Multiple possible networks found, use a Network ID to be more specific. (HTTP 409) (Request-ID: req-25acb794-6db9-44e6-b2f1-708d0b56d66f)
+
+------------------------ retry --------------------------------
+$ openstack loadbalancer flavorprofile create --name octavia_flavorprofile --provider amphora --flavor-data '{"loadbalancer_topology": "SINGLE"}'
+$ openstack loadbalancer flavor create --name octavia_lb_flavor2 --flavorprofile octavia_flavorprofile  --enable 
+$ openstack loadbalancer create --name lb1 --vip-subnet-id octavia_subnet --flavor octavia_lb_flavor2 --provider amphora
+
+  => 네트워크쪽 에러 발생함
+  2019-12-17 14:03:09.379 23 WARNING octavia.amphorae.drivers.haproxy.rest_api_driver [-] Could not connect to instance. Retrying.: ConnectionError: HTTPSConnectionPool(host='192.168.0.132', port=9443): Max retries exceeded with url: // (Caused by NewConnectionError('<urllib3.connection.VerifiedHTTPSConnection object at 0x7fcd403bc750>: Failed to establish a new connection: [Errno 113] No route to host',))
+
+로드밸런서 만드는 도중에 이런 에러가 생성됨, 로드밸런서는 계속 pending create
+
 
 
 
