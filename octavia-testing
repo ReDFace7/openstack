@@ -17,6 +17,14 @@ openstack router create octavia_router
 openstack router set --external-gateway external-network octavia_router
 openstack router add subnet octavia_router octavia_subnet
 
+
+올인원에서 했는데 모든 노드에 추가하여 테스트해보야할듯
+route add -net 192.168.0.0/24 gw 192.168.122.24 
+vi /etc/rc.local 
+route add -net 192.168.0.0/24 gw 192.168.122.??
+
+chmod +x /etc/rc.local
+
 openstack security group rule create --protocol icmp octavia_sg
 openstack security group rule create --protocol tcp --dst-port 22 octavia_sg
 openstack security group rule create --protocol tcp --dst-port 9443 octavia_sg
