@@ -21,6 +21,7 @@ openstack security group rule create --protocol icmp octavia_sg
 openstack security group rule create --protocol tcp --dst-port 22 octavia_sg
 openstack security group rule create --protocol tcp --dst-port 9443 octavia_sg
 
+=== Octavia 사용자로 만들어야함 ===
 openstack keypair create octavia_ssh_key --private-key octavia_ssh_key.pem
 
 
