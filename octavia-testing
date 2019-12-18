@@ -1,34 +1,49 @@
 ==== prerequisite for Octavia ====
 
-$ source admin-rc
+source admin-rc
 
-$ openstack flavor create --vcpus 1 --ram 2048 --disk 10 octavia_flavor
+openstack flavor create --vcpus 1 --ram 2048 --disk 10 octavia_flavor
 
-$ openstack image create --file test-only-amphora-x64-haproxy-centos-7.qcow2 --disk-format qcow2 --min-disk 3 --public octavia_amphora
-$ openstack image set --tag amphora octavia_amphora
+openstack image create --file test-only-amphora-x64-haproxy-centos-7.qcow2 --disk-format qcow2 --min-disk 3 --public octavia_amphora
+openstack image set --tag amphora octavia_amphora
 
-$ openstack network create --provider-network-type flat --provider-physical-network physnet1 --external external-network
-$ openstack subnet create --no-dhcp --subnet-range 192.168.122.0/24 --allocation-pool start=192.168.122.20,end=192.168.122.200 --network external-network external-subnet
+openstack network create --provider-network-type flat --provider-physical-network physnet1 --external external-network
+openstack subnet create --no-dhcp --subnet-range 192.168.122.0/24 --allocation-pool start=192.168.122.20,end=192.168.122.200 --network external-network external-subnet
 
-$ openstack network create octavia_network
-$ openstack subnet create --subnet-range 192.168.0.0/24 --network octavia_network octavia_subnet
+openstack network create octavia_network
+openstack subnet create --subnet-range 192.168.0.0/24 --network octavia_network octavia_subnet
 
-$ openstack router create octavia_router
-$ openstack router set --external-gateway external-network octavia_router
-$ openstack router add subnet octavia_router octavia_subnet
+openstack router create octavia_router
+openstack router set --external-gateway external-network octavia_router
+openstack router add subnet octavia_router octavia_subnet
+
+openstack security group rule create --protocol icmp octavia_sg
+openstack security group rule create --protocol tcp --dst-port 22 octavia_sg
+openstack security group rule create --protocol tcp --dst-port 9443 octavia_sg
+
+openstack keypair create octavia_ssh_key --private-key octavia_ssh_key.pem
 
 
------------------------- fail ----------------------------
-$ openstack loadbalancer flavorprofile create --name amphora_flavor --provider amphora --flavor-data '{"loadbalancer_topology": "SINGLE", "compute_flavor": "3cae8edd-8751-4175-8825-3f59e07f0431"}'
-$ openstack loadbalancer flavor create --name octavia_lb_flavor --flavorprofile amphora_flavor  --enable
-$ openstack loadbalancer create --name lb1 --vip-subnet-id octavia_subnet --flavor octavia_lb_flavor --provider amphora
+==== controller 노드에서 octavia.conf 수정 ====
+vi /etc/kolla/octavia-api/octavia.conf
+[controller_worker]
+amp_boot_network_list = octavia_network(ID)
+amp_secgroup_list = octavia_sg(ID)
+amp_flavor_id = octavia_flavor(ID)
+amp_ssh_key_name = octavia_ssh_key
+...
 
-ERROR oslo_messaging.rpc.server ComputeBuildException: Failed to build compute instance due to: Multiple possible networks found, use a Network ID to be more specific. (HTTP 409) (Request-ID: req-25acb794-6db9-44e6-b2f1-708d0b56d66f)
+cp /etc/kolla/octavia-api/octavia.conf /etc/kolla-octavia-health-manager/
+cp /etc/kolla/octavia-api/octavia.conf /etc/kolla/octavia-housekeeping/
+cp /etc/kolla/octavia-api/octavia.conf /etc/kolla/octavia-worker/
+docker restart octavia_api
+docker restart octavia_health_manager
+docker restart octavia_housekeeping
+docker restart octavia_worker
 
------------------------- retry --------------------------------
-$ openstack loadbalancer flavorprofile create --name octavia_flavorprofile --provider amphora --flavor-data '{"loadbalancer_topology": "SINGLE"}'
-$ openstack loadbalancer flavor create --name octavia_lb_flavor2 --flavorprofile octavia_flavorprofile  --enable 
-$ openstack loadbalancer create --name lb1 --vip-subnet-id octavia_subnet --flavor octavia_lb_flavor2 --provider amphora
+openstack loadbalancer flavorprofile create --name octavia_flavorprofile --provider amphora --flavor-data '{"loadbalancer_topology": "SINGLE"}'
+openstack loadbalancer flavor create --name octavia_lb_flavor2 --flavorprofile octavia_flavorprofile  --enable 
+openstack loadbalancer create --name lb1 --vip-subnet-id octavia_subnet --flavor octavia_lb_flavor2 --provider amphora
 
   => 네트워크쪽 에러 발생함
   2019-12-17 14:03:09.379 23 WARNING octavia.amphorae.drivers.haproxy.rest_api_driver [-] Could not connect to instance. Retrying.: ConnectionError: HTTPSConnectionPool(host='192.168.0.132', port=9443): Max retries exceeded with url: // (Caused by NewConnectionError('<urllib3.connection.VerifiedHTTPSConnection object at 0x7fcd403bc750>: Failed to establish a new connection: [Errno 113] No route to host',))
