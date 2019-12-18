@@ -63,5 +63,6 @@ Octavia Controller 에서 amphora 인스턴스에 접근할 수 있어야 한다
   ==> route add -net 192.168.0.0/24 gw 192.168.122.24 
       vi /etc/rc.local 에도 해당 내용 추가후 chmod +x /etc/rc.local
 
-
+-----
+올인원에서 테스트 했는데. route 명령으로 경로 테이블 추가하니까 물리적 노드에서 인스턴스로 
 
