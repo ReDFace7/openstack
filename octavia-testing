@@ -25,6 +25,7 @@ route add -net 192.168.0.0/24 gw 192.168.122.??
 
 chmod +x /etc/rc.local
 
+openstack security group create octavia_sg
 openstack security group rule create --protocol icmp octavia_sg
 openstack security group rule create --protocol tcp --dst-port 22 octavia_sg
 openstack security group rule create --protocol tcp --dst-port 9443 octavia_sg
